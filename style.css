@@ -1,0 +1,914 @@
+/* ==================================================================
+   كل سنة وأنتِ طيبة يا أمي ❤️ — Interactive Story Experience
+   ------------------------------------------------------------------
+   نظام التصميم (Design Tokens)
+   الفكرة: نبدأ بجو "تقني بارد" (تحقق/بحث/تحليل) بلون بنفسجي عميق
+   يشبه شاشات الأنظمة، ثم ننتقل تدريجيًا إلى دفء الذهبي والوردي في
+   مشاهد الاحتفال. هذا التحول اللوني هو التوقيع البصري للتجربة.
+   ================================================================== */
+
+:root {
+  /* الألوان الأساسية */
+  --bg-deep: #1c1024; /* خلفية بنفسجية عميقة — "الوضع التقني" */
+  --bg-deep-2: #2a1630; /* تدرج ثانوي للخلفية */
+  --bg-warm: #3a1530; /* خلفية دافئة تمهيدية قبل الاحتفال */
+  --bg-celebrate: #4a1533; /* خلفية الاحتفال — بنفسجي-وردي غامق */
+
+  --rose: #ef5f8a; /* وردي دافئ — اللون التفاعلي الأساسي */
+  --rose-soft: #f592ac;
+  --gold: #ecc25f; /* ذهبي — الاحتفال والتقدير */
+  --gold-soft: #f6dc9c;
+  --mint: #7ad9a8; /* أخضر نجاح خفيف — علامات الصح فقط */
+  --mauve: #9c7ea3; /* بنفسجي مطفي — نصوص ثانوية/تسميات */
+
+  --cream: #fbf3ec; /* النص الأساسي على الخلفيات الداكنة */
+  --cream-dim: rgba(251, 243, 236, 0.72);
+  --cream-faint: rgba(251, 243, 236, 0.45);
+
+  --shadow-soft: rgba(15, 6, 20, 0.45);
+
+  /* الطباعة */
+  --font-ui: "Cairo", "Tahoma", sans-serif; /* واجهات النظام */
+  --font-display: "Lalezar", "Cairo", sans-serif; /* الرسالة الاحتفالية */
+
+  /* الحركة */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 0.25s;
+  --dur-med: 0.6s;
+  --dur-slow: 1.1s;
+
+  /* مقاييس */
+  --radius-card: 22px;
+  --radius-pill: 999px;
+  --gutter: clamp(18px, 6vw, 28px);
+}
+
+/* ------------------------------------------------------------------
+   Reset أساسي — Mobile First
+   ------------------------------------------------------------------ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  height: 100%;
+  /* يمنع تكبير النص تلقائيًا على iOS عند الدوران */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  height: 100%;
+  min-height: 100dvh;
+  font-family: var(--font-ui);
+  background: var(--bg-deep);
+  color: var(--cream);
+  overflow: hidden;
+  position: relative;
+  direction: rtl;
+  /* تمنع السحب/التكبير غير المرغوب فيه أثناء التفاعل باللمس */
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ------------------------------------------------------------------
+   الخلفية المتحركة العامة — تتدرج لونيًا حسب المشهد عبر data-mood
+   على body (تُضبط من script.js)
+   ------------------------------------------------------------------ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  z-index: 0;
+  background:
+    radial-gradient(
+      circle at 20% 15%,
+      rgba(239, 95, 138, 0.2),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 85% 80%,
+      rgba(236, 194, 95, 0.14),
+      transparent 50%
+    ),
+    radial-gradient(circle at 50% 50%, var(--bg-deep-2), var(--bg-deep) 70%);
+  transition: background var(--dur-slow) var(--ease-smooth);
+  animation: bg-drift 18s ease-in-out infinite alternate;
+}
+
+body[data-mood="warm"]::before {
+  background:
+    radial-gradient(
+      circle at 25% 20%,
+      rgba(239, 95, 138, 0.28),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 80% 75%,
+      rgba(236, 194, 95, 0.22),
+      transparent 50%
+    ),
+    radial-gradient(circle at 50% 50%, var(--bg-warm), var(--bg-deep-2) 70%);
+}
+
+body[data-mood="celebrate"]::before {
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      rgba(236, 194, 95, 0.32),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 75% 80%,
+      rgba(239, 95, 138, 0.3),
+      transparent 55%
+    ),
+    radial-gradient(circle at 50% 50%, var(--bg-celebrate), var(--bg-warm) 75%);
+}
+
+@keyframes bg-drift {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  100% {
+    transform: scale(1.12) rotate(4deg);
+  }
+}
+
+/* خلفية دقيقة من "جسيمات" ثابتة عبر box-shadow متعدد — إحساس تقني */
+.particle-field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+}
+.particle-field span {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--cream);
+  opacity: 0.25;
+  animation: particle-float 6s ease-in-out infinite;
+}
+@keyframes particle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translateY(-18px);
+    opacity: 0.5;
+  }
+}
+
+/* ------------------------------------------------------------------
+   طبقة الكونفيتي / الجسيمات (Canvas ملء الشاشة)
+   ------------------------------------------------------------------ */
+#fx-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------
+   طبقة الفلاش الأبيض (نهاية مشهد التحقق)
+   ------------------------------------------------------------------ */
+.flash-overlay {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+.flash-overlay.flash-active {
+  animation: flash-pulse 0.5s ease-out forwards;
+}
+@keyframes flash-pulse {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------------
+   الحاوية الرئيسية للمشهد
+   ------------------------------------------------------------------ */
+.stage {
+  position: relative;
+  z-index: 2;
+  height: 100dvh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter);
+  text-align: center;
+}
+
+/* كل مشهد هو .scene — يدخل بـ fade+rise ويخرج بـ fade+shrink */
+.scene {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  opacity: 0;
+  transform: translateY(18px) scale(0.98);
+  animation: scene-in var(--dur-med) var(--ease-smooth) forwards;
+}
+.scene.scene-out {
+  animation: scene-out var(--dur-fast) var(--ease-smooth) forwards;
+}
+@keyframes scene-in {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes scene-out {
+  to {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.97);
+  }
+}
+
+/* ==================================================================
+   عنصر التوقيع البصري: "بطاقة الحالة" (Status HUD Card)
+   تُستخدم في المشاهد 1 / 3 / 4 / 5 لتوحيد الطابع "التقني" قبل الاحتفال
+   ================================================================== */
+.hud-card {
+  width: 100%;
+  background: linear-gradient(
+    155deg,
+    rgba(251, 243, 236, 0.07),
+    rgba(251, 243, 236, 0.02)
+  );
+  border: 1px solid rgba(251, 243, 236, 0.14);
+  border-radius: var(--radius-card);
+  padding: 28px 22px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 20px 50px var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.hud-icon {
+  font-size: 2.6rem;
+  line-height: 1;
+  animation: icon-pulse 2.2s ease-in-out infinite;
+}
+@keyframes icon-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.8;
+  }
+}
+
+.hud-label {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--cream);
+  min-height: 1.4em;
+}
+
+.hud-sublabel {
+  font-size: 1.1rem;
+  color: var(--cream-dim);
+  min-height: 1.2em;
+}
+
+/* شريط تحميل عام */
+.progress-track {
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(251, 243, 236, 0.12);
+  overflow: hidden;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--rose), var(--gold));
+  width: 0%;
+  transition: width 0.5s var(--ease-smooth);
+  box-shadow: 0 0 12px rgba(239, 95, 138, 0.6);
+}
+.progress-percent {
+  font-size: 0.82rem;
+  color: var(--cream-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+
+/* عداد تنازلي كبير (مشهد 1 و 5) */
+.countdown-number {
+  font-family: var(--font-display);
+  font-size: clamp(3.2rem, 22vw, 5rem);
+  color: var(--gold);
+  text-shadow: 0 0 24px rgba(236, 194, 95, 0.5);
+  animation: countdown-pop 0.55s var(--ease-bounce);
+}
+@keyframes countdown-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* علامة صح تترسم بنفسها */
+.check-badge {
+  width: 54px;
+  height: 54px;
+}
+.check-badge circle {
+  fill: none;
+  stroke: var(--mint);
+  stroke-width: 3;
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+  animation: draw-circle 0.6s var(--ease-smooth) forwards;
+}
+.check-badge path {
+  fill: none;
+  stroke: var(--mint);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: draw-check 0.4s var(--ease-smooth) 0.5s forwards;
+}
+@keyframes draw-circle {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes draw-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* نص الحالة العام (تم العثور / تم التحقق ...) */
+.status-line {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--cream);
+  opacity: 0;
+  animation: line-fade-in var(--dur-fast) ease-out forwards;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+@keyframes line-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==================================================================
+   المشهد 2 — أوعي تدوسي 😂
+   ================================================================== */
+.big-button {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--cream);
+  background: linear-gradient(160deg, var(--rose), #c93d68);
+  padding: 22px 30px;
+  border-radius: 20px;
+  box-shadow:
+    0 14px 30px rgba(239, 95, 138, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform var(--dur-fast) var(--ease-smooth);
+  width: 100%;
+}
+.big-button:active {
+  transform: scale(0.96);
+}
+.big-button.shake {
+  animation: btn-shake 0.5s ease-in-out;
+}
+@keyframes btn-shake {
+  10%,
+  90% {
+    transform: translateX(-3px);
+  }
+  20%,
+  80% {
+    transform: translateX(6px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-10px);
+  }
+  40%,
+  60% {
+    transform: translateX(10px);
+  }
+}
+
+.big-button.secondary {
+  background: linear-gradient(160deg, var(--gold), #c98f2e);
+  box-shadow:
+    0 14px 30px rgba(236, 194, 95, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.reaction-face {
+  font-size: 3.4rem;
+  animation: face-bounce 0.6s var(--ease-bounce);
+}
+@keyframes face-bounce {
+  0% {
+    transform: translateY(-30px) scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(4px) scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.reaction-text {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+/* ==================================================================
+   المشهد 4 — تحليل النتائج: قائمة معايير متتابعة
+   ================================================================== */
+.metric-block {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.metric-title {
+  font-size: 1.15rem;
+  color: var(--cream-dim);
+  font-weight: 600;
+}
+.metric-result {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  color: var(--gold);
+  align-self: center;
+  animation: countdown-pop 0.5s var(--ease-bounce);
+}
+
+/* حالة المبالغة الكوميدية عند 9999% */
+.progress-track.overload .progress-fill {
+  animation: overload-shake 0.35s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--rose), var(--gold), var(--rose));
+  background-size: 200% 100%;
+}
+@keyframes overload-shake {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.35);
+  }
+}
+.warning-line {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--rose-soft);
+  animation: warn-shake 0.4s var(--ease-bounce);
+}
+@keyframes warn-shake {
+  0% {
+    transform: translateX(0) scale(0.8);
+    opacity: 0;
+  }
+  30% {
+    transform: translateX(-6px) scale(1.05);
+    opacity: 1;
+  }
+  60% {
+    transform: translateX(6px);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* ==================================================================
+   المشهد 5 — تجهيز الحفلة: عناصر متوازية
+   ================================================================== */
+.prep-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.prep-label {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--cream);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prep-label .prep-emoji {
+  display: inline-block;
+  animation: icon-wobble 1.4s ease-in-out infinite;
+}
+@keyframes icon-wobble {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+/* ==================================================================
+   المشهد 6 — الاحتفال 🎉
+   ================================================================== */
+.celebrate-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.celebrate-emoji-row {
+  font-size: 3rem;
+  display: flex;
+  gap: 10px;
+}
+.celebrate-emoji-row span {
+  animation: emoji-rise 1.1s var(--ease-bounce) both;
+}
+.celebrate-emoji-row span:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.celebrate-emoji-row span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.celebrate-emoji-row span:nth-child(3) {
+  animation-delay: 0.31s;
+}
+.celebrate-emoji-row span:nth-child(4) {
+  animation-delay: 0.44s;
+}
+@keyframes emoji-rise {
+  0% {
+    transform: translateY(40px) scale(0.4) rotate(-15deg);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(-6px) scale(1.15) rotate(4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+.celebrate-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 8vw, 2.6rem);
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(236, 194, 95, 0.5);
+}
+
+/* بالونات تطفو من أسفل الشاشة لأعلى */
+.balloon {
+  position: fixed;
+  bottom: -120px;
+  font-size: clamp(2.2rem, 9vw, 3rem);
+  z-index: 4;
+  pointer-events: none;
+  animation-name: balloon-rise;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+@keyframes balloon-rise {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-115vh) translateX(var(--drift, 20px))
+      rotate(var(--tilt, 8deg));
+    opacity: 0.9;
+  }
+}
+
+/* قلوب طافية */
+.floating-heart {
+  position: fixed;
+  bottom: -40px;
+  font-size: 1.4rem;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  animation-name: heart-float;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+@keyframes heart-float {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-70vh) scale(1);
+    opacity: 0;
+  }
+}
+
+/* لمعات صغيرة عشوائية */
+.sparkle {
+  position: fixed;
+  font-size: 1rem;
+  color: var(--gold-soft);
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  animation: sparkle-twinkle 1.6s ease-in-out infinite;
+}
+@keyframes sparkle-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.5) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) rotate(90deg);
+  }
+}
+
+/* التورتة والشموع — عنصر مركزي ثابت */
+.cake-wrap {
+  font-size: clamp(3.5rem, 16vw, 4.5rem);
+  position: relative;
+  animation: cake-settle 0.7s var(--ease-bounce);
+}
+@keyframes cake-settle {
+  0% {
+    transform: scale(0) rotate(-10deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+.candle-flame {
+  display: inline-block;
+  animation: flame-flicker 0.9s ease-in-out infinite alternate;
+}
+@keyframes flame-flicker {
+  0% {
+    transform: scale(1) rotate(-2deg);
+  }
+  100% {
+    transform: scale(1.15) rotate(2deg);
+  }
+}
+
+/* ==================================================================
+   المشهد 7 — الرسالة الرئيسية: كتابة حرف بحرف
+   ================================================================== */
+.message-block {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+}
+.message-emoji {
+  font-size: 3.2rem;
+  animation: icon-pulse 2s ease-in-out infinite;
+}
+.typewriter-line {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 7vw, 2.1rem);
+  color: var(--cream);
+  line-height: 1.6;
+  min-height: 1.6em;
+}
+.typewriter-line .cursor {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  background: var(--gold);
+  margin-inline-start: 3px;
+  vertical-align: -0.15em;
+  animation: cursor-blink 0.8s steps(1) infinite;
+}
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+.typewriter-line.sub {
+  font-family: var(--font-ui);
+  font-size: clamp(1.2rem, 5.5vw, 1.5rem);
+  font-weight: 600;
+  color: var(--cream-dim);
+  min-height: 1.4em;
+}
+
+/* ==================================================================
+   المشهد 8 — النهاية: رسائل متتابعة هادئة
+   ================================================================== */
+.ending-block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+.ending-line {
+  font-size: clamp(1.3rem, 6vw, 1.6rem);
+  font-weight: 600;
+  color: var(--cream);
+  opacity: 0;
+  animation: line-fade-in var(--dur-med) var(--ease-smooth) forwards;
+}
+.ending-signature {
+  margin-top: 10px;
+  font-size: 1rem;
+  color: var(--cream-faint);
+  opacity: 0;
+  animation: line-fade-in var(--dur-med) var(--ease-smooth) forwards;
+  letter-spacing: 0.3px;
+}
+
+/* مكان جاهز لإضافة صورة مستقبلًا (اختياري) داخل المشهد 7 أو 8 */
+.mom-photo {
+  width: 128px;
+  height: 128px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  box-shadow: 0 10px 30px var(--shadow-soft);
+  margin-bottom: 6px;
+}
+
+/* ------------------------------------------------------------------
+   مؤشر تقدم المشاهد (نقاط أسفل الشاشة)
+   ------------------------------------------------------------------ */
+.progress-dots {
+  position: fixed;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 7px;
+  z-index: 10;
+}
+.progress-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(251, 243, 236, 0.25);
+  transition:
+    background var(--dur-fast) ease,
+    transform var(--dur-fast) ease;
+}
+.progress-dots span.active {
+  background: var(--gold);
+  transform: scale(1.4);
+}
+
+/* ------------------------------------------------------------------
+   زر تشغيل الموسيقى الاحتياطي
+   ------------------------------------------------------------------ */
+.music-fallback-btn {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  left: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(251, 243, 236, 0.12);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  z-index: 20;
+  box-shadow: 0 6px 18px var(--shadow-soft);
+  animation: icon-pulse 2s ease-in-out infinite;
+}
+.music-fallback-btn.hidden {
+  display: none;
+}
+
+/* ------------------------------------------------------------------
+   إتاحة الوصول: احترام تفضيل تقليل الحركة
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* تركيز واضح على لوحة المفاتيح لأي عنصر تفاعلي */
+button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------------
+   شاشات أوسع قليلًا (تابلت) — لا يزال العرض مركّزًا بعرض ثابت أقصى
+   ------------------------------------------------------------------ */
+@media (min-width: 540px) {
+  .scene {
+    max-width: 420px;
+  }
+}
+
+.close-btn {
+  margin-top: 22px;
+  padding: 10px 26px;
+  border-radius: var(--radius-pill);
+  background: rgba(251, 243, 236, 0.1);
+  border: 1px solid rgba(251, 243, 236, 0.25);
+  color: var(--cream-dim);
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0;
+  animation: line-fade-in var(--dur-med) var(--ease-smooth) forwards;
+  animation-delay: 0.3s;
+  transition:
+    background var(--dur-fast) ease,
+    transform var(--dur-fast) ease;
+}
+.close-btn:active {
+  transform: scale(0.95);
+  background: rgba(251, 243, 236, 0.18);
+}
